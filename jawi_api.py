@@ -5,7 +5,7 @@ import io
 import torch
 import os
 from pydantic import BaseModel
-from jawi_models import Encoder, Decoder, Seq2Seq
+from jawi_models import *
 import numpy as np
 
 def load_pretrained(model, weight_path, device, flexible = False):
@@ -88,7 +88,7 @@ pretrain_wgt_j2r_path = "weights/j2r_v2.pth"
 pretrain_wgt_r2j_path = "weights/r2j_v2.pth"
 
 jawi_glyph = torch.load(jawi_glyph_path)
-rumi_glyph = torch.load(rumi_glyph)
+rumi_glyph = torch.load(rumi_glyph_path)
 
 model_j2r = Seq2Seq(enc_jawi, dec_rumi, pass_enc2dec_hid=enc2dec_hid, device=DEVICE)
 model_r2j = Seq2Seq(enc_rumi, dec_jawi, pass_enc2dec_hid=enc2dec_hid, device=DEVICE)
@@ -154,3 +154,7 @@ async def r2j(body: Transliteration):
     res = inference_looper(text, model_r2j, rumi_glyph, jawi_glyph, topk = 1)
     res = ' '.join(sublist[0] for sublist in res)
     return {"jawi": res}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8080)

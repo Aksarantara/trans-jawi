@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import random
+import numpy as np
 
 
 class Encoder(nn.Module):
@@ -508,3 +509,65 @@ class Seq2Seq(nn.Module):
 
         return pred_tnsr_list
 
+class GlyphStrawboss():
+    def __init__(self, lang_script):
+        """ list of letters in a language in unicode
+        lang: List with unicodes
+        """
+        self.glyphs = lang_script
+
+        self.char2idx = {}
+        self.idx2char = {}
+        self._create_index()
+
+    def _create_index(self):
+
+        self.char2idx['_'] = 0  #pad
+        self.char2idx['$'] = 1  #start
+        self.char2idx['#'] = 2  #end
+        self.char2idx['*'] = 3  #Mask
+        self.char2idx["'"] = 4  #apostrophe U+0027
+        self.char2idx['%'] = 5  #unused
+        self.char2idx['!'] = 6  #unused
+
+        self.glyphs = [char for char in self.glyphs if char not in self.char2idx]
+
+        # letter to index mapping
+        for idx, char in enumerate(self.glyphs):
+            self.char2idx[char] = idx + 7 # +7 token initially
+
+        # index to letter mapping
+        for char, idx in self.char2idx.items():
+            self.idx2char[idx] = char
+
+    def size(self):
+        return len(self.char2idx)
+
+
+    def word2xlitvec(self, word):
+        """ Converts given string of gyphs(word) to vector(numpy)
+        Also adds tokens for start and end
+        """
+        try:
+            vec = [self.char2idx['$']] #start token
+            for i in list(word):
+                vec.append(self.char2idx[i])
+            vec.append(self.char2idx['#']) #end token
+
+            vec = np.asarray(vec, dtype=np.int64)
+            return vec
+
+        except Exception as error:
+            print("Error In word:", word, "Error Char not in Token:", error)
+            sys.exit()
+
+    def xlitvec2word(self, vector):
+        """ Converts vector(numpy) to string of glyphs(word)
+        """
+        char_list = []
+        for i in vector:
+            char_list.append(self.idx2char[i])
+
+        word = "".join(char_list).replace('$','').replace('#','') # remove tokens
+        word = word.replace("_", "").replace('*','') # remove tokens
+        return word
