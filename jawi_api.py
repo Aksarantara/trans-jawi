@@ -118,8 +118,15 @@ def replace_kaf_gaf_unicode(word):
     word = word.replace('ݢ', 'ڬ')
     return word
 
+def remove_invalid_chars(word, glyph):
+    filtered_chars = [char for char in word if char in glyph.char2idx]
+
+    # Join the filtered characters back into a string
+    return ''.join(filtered_chars)
+
 def inferencer(word, model, src_glyph, tgt_glyph, device=DEVICE, topk = 10):
     word = replace_kaf_gaf_unicode(word)
+    word = remove_invalid_chars(word, src_glyph)
 
     in_vec = torch.from_numpy(src_glyph.word2xlitvec(word)).to(device)
     ## change to active or passive beam
